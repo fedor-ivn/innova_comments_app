@@ -15,7 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from rest_framework.routers import DefaultRouter
+from main import views as main_views
+
+router = DefaultRouter()
+router.register(r'api/comments', main_views.CommentViewSet, basename='comments')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 ]
+urlpatterns += router.urls
