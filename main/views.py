@@ -1,8 +1,9 @@
-from rest_framework import viewsets
+from rest_framework.generics import ListCreateAPIView
+
 from . import models
 from . import serializers
 
 
-class CommentViewSet(viewsets.ModelViewSet):
+class CommentAPIView(ListCreateAPIView):
     queryset = models.Comment.objects.all()
     serializer_class = serializers.CommentSerializer
