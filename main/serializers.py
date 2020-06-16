@@ -9,7 +9,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         parent = data.get('parent')
-        if parent.parent is not None:
+        if parent and parent.parent:
             raise serializers.ValidationError(
                 'Parent comment must not have parent'
             )
