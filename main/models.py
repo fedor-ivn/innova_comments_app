@@ -9,7 +9,7 @@ class CommentManager(models.Manager):
             sort_key=Case(
                 When(
                     parent__isnull=True,
-                    then=Concat('id', V('_'), 'id', output_field=CharField())
+                    then=Concat('id', V('_0'), output_field=CharField())
                 ),
                 When(
                     parent__isnull=False,

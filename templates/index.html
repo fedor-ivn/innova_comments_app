@@ -45,7 +45,11 @@
                                     <v-textarea v-model="text" label="Text" counter maxlength="2000" full-width single-line
                                         :rules="textRules"></v-textarea>
 
-                                    <v-btn @click="submitComment" color="success" dark>submit</v-btn>
+                                    <v-btn
+                                     @click="submitComment"
+                                     :disabled="!valid"
+                                     color="success"
+                                    >submit</v-btn>
                                 </v-form>
                         </v-col>
                     </v-row>
@@ -66,7 +70,7 @@
                                         <v-list-item-title class="headline">{{ comment.author_name }}</v-list-item-title>
                                         <v-list-item-subtitle>{{ comment.author_email }}</v-list-item-subtitle>
                                     </v-list-item-content>
-                                    <v-list-item-action>
+                                    <v-list-item-action v-if="!comment.parent">
                                         <v-icon>mdi-reply</v-icon>
                                     </v-list-item-action>
                                 </v-list-item>
@@ -78,7 +82,17 @@
                             </v-card>
                         </v-col>
                     </v-row>
-
+                    <v-row>
+                        <v-col>
+                    <div class="text-center">
+                        <v-pagination
+                          v-model="page"
+                          :length="pagesCount"
+                          @input="getComments()"
+                        ></v-pagination>
+                      </div>
+                    </v-col>
+                    </v-row>
                 </v-container>
             </v-main>
             <v-footer color="indigo" app>
@@ -109,7 +123,7 @@
             name: '',
             nameRules: [
                 v => !!v || 'Name is required',
-                v => (v && v.length <= 10) || 'Name must be less than 10 characters',
+                v => (v && v.length <= 32) || 'Name must be less than 32 characters',
             ],
             email: '',
             emailRules: [
@@ -121,8 +135,14 @@
                 v => !!v || 'Text is required',
             ],
             lazy: false,
-            comments: []
+            comments: [],
+            page: 1
         }),
+        computed: {
+            pagesCount(){
+                return Math.ceil(parseFloat(this.comments.count) / 10)
+            }
+        },
         methods: {
             validate() {
                 this.$refs.form.validate();
@@ -134,14 +154,22 @@
                         author_email: this.email,
                         text: this.text,
                     })
-                    .then(response => (this.comments.push(response)))
+                    .then(response => (this.comments.results.push(response.data)))
                     .catch(error => console.log(error));
+            },
+            getComments(){
+                axios
+                .get('/api/comments/', {
+                    params: {
+                        limit: 10,
+                        offset: 10 * (this.page - 1)
+                    }
+                })
+                .then(response => (this.comments = response.data));
             }
         },
         mounted() {
-            axios
-                .get('/api/comments/')
-                .then(response => (this.comments = response.data));
+            this.getComments();
         }
     })
 </script>
