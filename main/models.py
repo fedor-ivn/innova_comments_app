@@ -1,19 +1,43 @@
 from django.db import models
 from django.db.models import CharField, Case, When, Value as V
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Cast, LPad
 
 
 class CommentManager(models.Manager):
+    DIGIT_COUNT = 10
+
     def get_queryset(self):
-        queryset = super().get_queryset().annotate(
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(
             sort_key=Case(
                 When(
                     parent__isnull=True,
-                    then=Concat('id', V('_0'), output_field=CharField())
+                    then=Concat(
+                        LPad(
+                            Cast('id', output_field=CharField()),
+                            self.DIGIT_COUNT,
+                            V('0')
+                        ),
+                        V('_0'),
+                        output_field=CharField()
+                    )
                 ),
                 When(
                     parent__isnull=False,
-                    then=Concat('parent', V('_'), 'id', output_field=CharField())
+                    then=Concat(
+                        LPad(
+                            Cast('parent', output_field=CharField()),
+                            self.DIGIT_COUNT,
+                            V('0')
+                        ),
+                        V('_'),
+                        LPad(
+                            Cast('id', output_field=CharField()),
+                            self.DIGIT_COUNT,
+                            V('0')
+                        ),
+                        output_field=CharField()
+                    )
                 ),
                 output_field=CharField()
             )

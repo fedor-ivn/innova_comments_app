@@ -168,12 +168,13 @@
                 this.$refs.form.validate();
             },
             submitComment() {
+                let parent = this.reply ? this.reply.id : null
                 axios
                     .post('/api/comments/', {
                         author_name: this.name,
                         author_email: this.email,
                         text: this.text,
-                        parent: this.reply.id
+                        parent: parent
                     })
                     .then(response => {
                         this.$refs.form.reset()
