@@ -30,3 +30,8 @@ class Comment(models.Model):
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
 
     objects = CommentManager()
+
+    def key(self):
+        if self.parent:
+            return f'{self.parent_id}_{self.id}'
+        return f'{self.id}_0'

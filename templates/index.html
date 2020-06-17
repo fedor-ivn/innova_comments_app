@@ -33,24 +33,40 @@
                 <v-container class="fill-height">
                     <v-row justify="center">
                         <v-col lg="10">
-                        <div class="text-h4  mb-4 text-left">Add New Comment</div>
-                        <v-divider></v-divider>
-                                <v-form ref="form" v-model="valid" :lazy-validation="lazy">
-                                    <v-text-field v-model="name" :counter="32" :rules="nameRules" label="Name" required>
-                                    </v-text-field>
+                            <div class="text-h4  mb-4 text-left">Add New Comment</div>
+                            <v-divider class="mb-4"></v-divider>
+                            
+                            <v-banner two-line v-if="reply" class="text-h6 mb-4 indigo--text">
+                                <v-avatar
+                                slot="icon"
+                                color="indigo accent-4"
+                                size="40"
+                                >
+                                <v-icon
+                                    icon="mdi-lock"
+                                    color="white"
+                                >
+                                    mdi-reply
+                                </v-icon>
+                                </v-avatar>
+                                Reply to {{ reply.author_name }}'s comment:
+                            </v-banner>
+                            <v-form ref="form" v-model="valid" :lazy-validation="lazy">
+                                <v-text-field v-model="name" :counter="32" :rules="nameRules" label="Name" required>
+                                </v-text-field>
 
-                                    <v-text-field v-model="email" :rules="emailRules" label="E-mail" required>
-                                    </v-text-field>
+                                <v-text-field v-model="email" :rules="emailRules" label="E-mail" required>
+                                </v-text-field>
 
-                                    <v-textarea v-model="text" label="Text" counter maxlength="2000" full-width single-line
-                                        :rules="textRules"></v-textarea>
+                                <v-textarea v-model="text" label="Text" counter maxlength="2000" full-width single-line
+                                    :rules="textRules"></v-textarea>
 
-                                    <v-btn
-                                     @click="submitComment"
-                                     :disabled="!valid"
-                                     color="success"
-                                    >submit</v-btn>
-                                </v-form>
+                                <v-btn
+                                    @click="submitComment"
+                                    :disabled="!valid"
+                                    :color="(reply ? 'primary' : 'primary')"
+                                >{{ reply ? 'reply' : 'submit' }}</v-btn>
+                            </v-form>
                         </v-col>
                     </v-row>
                     <v-row justify="center">
@@ -59,7 +75,7 @@
                             <v-divider></v-divider>
                             <v-card 
                               :class="'mx-auto elevation-0' + (comment.parent ? ' pl-16' : '')"
-                              v-for="comment in comments.results"
+                              v-for="comment in comments.results" :key="comment.key"
                             >
                                 <v-list-item three-line>
                                     <v-list-item-avatar size="62" color="indigo">
@@ -71,7 +87,9 @@
                                         <v-list-item-subtitle>{{ comment.author_email }}</v-list-item-subtitle>
                                     </v-list-item-content>
                                     <v-list-item-action v-if="!comment.parent">
-                                        <v-icon>mdi-reply</v-icon>
+                                        <v-btn icon @click="reply = comment">
+                                            <v-icon>mdi-reply</v-icon>
+                                        </v-btn>
                                     </v-list-item-action>
                                 </v-list-item>
                                 <v-card-text>
@@ -84,14 +102,15 @@
                     </v-row>
                     <v-row>
                         <v-col>
-                    <div class="text-center">
-                        <v-pagination
-                          v-model="page"
-                          :length="pagesCount"
-                          @input="getComments()"
-                        ></v-pagination>
-                      </div>
-                    </v-col>
+                            <div class="text-center">
+                                <v-pagination 
+                                 v-model="page" 
+                                 :length="pagesCount" 
+                                 @input="getComments()"
+                                >
+                                </v-pagination>
+                            </div>
+                        </v-col>
                     </v-row>
                 </v-container>
             </v-main>
@@ -136,7 +155,8 @@
             ],
             lazy: false,
             comments: [],
-            page: 1
+            page: 1,
+            reply: null
         }),
         computed: {
             pagesCount(){
@@ -153,8 +173,23 @@
                         author_name: this.name,
                         author_email: this.email,
                         text: this.text,
+                        parent: this.reply.id
                     })
-                    .then(response => (this.comments.results.push(response.data)))
+                    .then(response => {
+                        this.$refs.form.reset()
+                        this.comments.results.push(response.data)
+                        this.comments.results.sort(function(a, b){
+                            if (a.key > b.key){
+                                return 1;
+                            }
+                            if (a.key < b.key){
+                                return -1;
+                            }
+                            return 0;
+                        })
+                        this.comments.results = this.comments.results.slice(0, 10);
+                        this.reply = null;
+                    })
                     .catch(error => console.log(error));
             },
             getComments(){
