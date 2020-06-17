@@ -4,46 +4,37 @@ from django.db.models.functions import Concat, Cast, LPad
 
 
 class CommentManager(models.Manager):
-    DIGIT_COUNT = 10
-
     def get_queryset(self):
-        queryset = super().get_queryset()
-        queryset = queryset.annotate(
-            sort_key=Case(
+        queryset = super().get_queryset().annotate(
+            _sort_key=Case(
                 When(
                     parent__isnull=True,
-                    then=Concat(
-                        LPad(
-                            Cast('id', output_field=CharField()),
-                            self.DIGIT_COUNT,
-                            V('0')
-                        ),
-                        V('_0'),
-                        output_field=CharField()
-                    )
+                    then=self.get_sort_key_expr('id', V('0'))
                 ),
                 When(
                     parent__isnull=False,
-                    then=Concat(
-                        LPad(
-                            Cast('parent', output_field=CharField()),
-                            self.DIGIT_COUNT,
-                            V('0')
-                        ),
-                        V('_'),
-                        LPad(
-                            Cast('id', output_field=CharField()),
-                            self.DIGIT_COUNT,
-                            V('0')
-                        ),
-                        output_field=CharField()
-                    )
+                    then=self.get_sort_key_expr('parent', 'id')
                 ),
-                output_field=CharField()
             )
         )
-        queryset = queryset.order_by('sort_key')
+        queryset = queryset.order_by('_sort_key')
         return queryset
+
+    @staticmethod
+    def get_sort_key_expr(value_left, value_right, digit_count=10):
+        return Concat(
+            LPad(
+                Cast(value_left, output_field=CharField()),
+                digit_count,
+                V('0')
+            ),
+            V('_'),
+            LPad(
+                Cast(value_right, output_field=CharField()),
+                digit_count,
+                V('0')
+            )
+        )
 
 
 class Comment(models.Model):
@@ -55,7 +46,7 @@ class Comment(models.Model):
 
     objects = CommentManager()
 
-    def key(self):
+    def sort_key(self):
         if self.parent:
-            return f'{self.parent_id}_{self.id}'
-        return f'{self.id}_0'
+            return f'{self.parent_id:0>10}_{self.id:0>10}'
+        return f'{self.id:0>10}_0000000000'

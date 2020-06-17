@@ -75,7 +75,7 @@
                             <v-divider></v-divider>
                             <v-card 
                               :class="'mx-auto elevation-0' + (comment.parent ? ' pl-16' : '')"
-                              v-for="comment in comments.results" :key="comment.key"
+                              v-for="comment in comments.results" :key="comment.sort_key"
                             >
                                 <v-list-item three-line>
                                     <v-list-item-avatar size="62" color="indigo">
@@ -180,10 +180,10 @@
                         this.$refs.form.reset()
                         this.comments.results.push(response.data)
                         this.comments.results.sort(function(a, b){
-                            if (a.key > b.key){
+                            if (a.sort_key > b.sort_key){
                                 return 1;
                             }
-                            if (a.key < b.key){
+                            if (a.sort_key < b.sort_key){
                                 return -1;
                             }
                             return 0;
