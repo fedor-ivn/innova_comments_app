@@ -5,5 +5,5 @@ from . import serializers
 
 
 class CommentAPIView(ListCreateAPIView):
-    queryset = models.Comment.objects.all()
+    queryset = models.MPTTComment.objects.all()
     serializer_class = serializers.CommentSerializer
